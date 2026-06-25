@@ -984,6 +984,36 @@
           </div>
         </div>
 
+        <!-- Generador de PIN de Recuperación -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" style="color: var(--success);">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+              </svg>
+              Generador de PIN de Recuperación
+            </h3>
+          </div>
+          
+          <p style="font-size: 0.8rem; color: var(--text-soft); margin-bottom: 1rem;">
+            Ingrese el Código de Desafío que le proporcione el cliente en la pantalla de bloqueo para generar su Código de Respuesta.
+          </p>
+          
+          <div class="form-group">
+            <label for="txt-challenge-code">Código de Desafío (6 dígitos)</label>
+            <input type="text" id="txt-challenge-code" class="input-field" placeholder="Ej: 729402" maxlength="6" style="text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
+          </div>
+          
+          <button class="btn btn-primary" onclick="generarCodigoRespuesta()">
+            Generar Código de Respuesta
+          </button>
+
+          <div id="recovery-result-container" style="display: none; margin-top: 1.25rem; padding: 1rem; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
+            <p style="font-size: 0.75rem; color: var(--text-soft); margin-bottom: 0.25rem;">CÓDIGO DE RESPUESTA:</p>
+            <span id="lbl-response-code" style="font-size: 2rem; font-weight: bold; color: var(--success); letter-spacing: 4px;">000000</span>
+          </div>
+        </div>
+
         <!-- Forzar Actualizaciones -->
         <div class="card">
           <div class="card-header">
@@ -2553,6 +2583,35 @@
       } finally {
         btn.disabled = false;
         btn.innerText = '🔑 Generar y Publicar';
+      }
+    }
+
+    async function generarCodigoRespuesta() {
+      const challengeField = document.getElementById('txt-challenge-code');
+      const challenge = challengeField.value.trim();
+      const resultContainer = document.getElementById('recovery-result-container');
+      const lblResponseCode = document.getElementById('lbl-response-code');
+
+      if (!challenge || challenge.length !== 6 || isNaN(challenge)) {
+        showToast('Ingrese un código de desafío válido de 6 dígitos.', 'error');
+        return;
+      }
+
+      try {
+        const text = challenge + "aura_response_salt_2026";
+        const msgBuffer = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        const hexVal = parseInt(hashHex.substring(0, 8), 16);
+        const code = (hexVal % 900000) + 100000;
+        
+        lblResponseCode.innerText = code.toString();
+        resultContainer.style.display = 'block';
+        showToast('Código de respuesta generado con éxito.', 'success');
+      } catch (e) {
+        showToast('Error al generar código: ' + e.message, 'error');
       }
     }
 

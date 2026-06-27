@@ -1012,6 +1012,68 @@
             <p style="font-size: 0.75rem; color: var(--text-soft); margin-bottom: 0.25rem;">CÓDIGO DE RESPUESTA:</p>
             <span id="lbl-response-code" style="font-size: 2rem; font-weight: bold; color: var(--success); letter-spacing: 4px;">000000</span>
           </div>
+        <!-- Administración de Catálogos Web (Cloud Firestore) -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" style="color: #38bdf8;">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              Catálogos Web (Cloud Firestore)
+            </h3>
+          </div>
+          
+          <p style="font-size: 0.8rem; color: var(--text-soft); margin-bottom: 1rem;">
+            Consulte o restablezca el PIN de sincronización de la base de datos Firestore del catálogo web.
+          </p>
+          
+          <div class="form-group">
+            <label for="txt-firestore-store-id">ID de la Tienda</label>
+            <input type="text" id="txt-firestore-store-id" class="input-field" placeholder="Ej: donjuan" style="text-align: center;">
+          </div>
+
+          <div class="form-group">
+            <label for="txt-firestore-project-id">Proyecto Firebase (Catálogo)</label>
+            <input type="text" id="txt-firestore-project-id" class="input-field" placeholder="Ej: aurapos-catalogo" value="aurapos-catalogo" style="text-align: center;">
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+            <button class="btn btn-primary" onclick="consultarPinFirestore()">
+              🔍 Consultar Datos y PIN
+            </button>
+          </div>
+
+          <!-- Contenedor de Resultado de Consulta -->
+          <div id="firestore-query-result" style="display: none; margin-bottom: 1rem; padding: 1rem; border-radius: var(--radius-sm); background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2);">
+            <div style="font-size: 0.75rem; color: var(--text-soft); margin-bottom: 0.4rem; display: flex; justify-content: space-between;">
+              <span>Negocio:</span> <span id="lbl-fs-name" style="font-weight: 600; color: #fff;">—</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-soft); margin-bottom: 0.4rem; display: flex; justify-content: space-between;">
+              <span>WhatsApp:</span> <span id="lbl-fs-phone" style="font-weight: 600; color: #fff;">—</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-soft); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem; margin-top: 0.4rem;">
+              <span>PIN Sincro:</span> <span id="lbl-fs-pin" style="font-size: 1.1rem; font-weight: bold; color: #38bdf8; letter-spacing: 1px;">—</span>
+            </div>
+          </div>
+
+          <!-- Restablecimiento de PIN -->
+          <div style="border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 1rem; margin-top: 0.5rem;">
+            <h4 style="font-size: 0.85rem; color: var(--text-soft); margin-bottom: 0.75rem; font-weight: 600;">Cambiar PIN en la Nube</h4>
+            
+            <div class="form-group">
+              <label for="txt-firestore-new-pin">Nuevo PIN (4 dígitos)</label>
+              <input type="text" id="txt-firestore-new-pin" class="input-field" placeholder="Ej: 1234" maxlength="4" style="text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
+            </div>
+
+            <div class="form-group">
+              <label for="txt-firestore-admin-token">Token Secreto de Admin</label>
+              <input type="password" id="txt-firestore-admin-token" class="input-field" placeholder="Token Secreto" value="AuraAdminToken2026" style="text-align: center;">
+            </div>
+
+            <button class="btn btn-danger" onclick="cambiarPinFirestore()" id="btn-fs-update">
+              🔑 Actualizar PIN en la Nube
+            </button>
+          </div>
         </div>
 
         <!-- Forzar Actualizaciones -->
@@ -2612,6 +2674,158 @@
         showToast('Código de respuesta generado con éxito.', 'success');
       } catch (e) {
         showToast('Error al generar código: ' + e.message, 'error');
+      }
+    }
+
+    // ── GESTIÓN DE CATÁLOGO WEB (CLOUD FIRESTORE REST API) ──
+
+    async function consultarPinFirestore() {
+      const storeId = document.getElementById('txt-firestore-store-id').value.trim().toLowerCase();
+      const projectId = document.getElementById('txt-firestore-project-id').value.trim();
+      const resultDiv = document.getElementById('firestore-query-result');
+      
+      const lblName = document.getElementById('lbl-fs-name');
+      const lblPhone = document.getElementById('lbl-fs-phone');
+      const lblPin = document.getElementById('lbl-fs-pin');
+
+      if (!storeId) {
+        showToast('Ingrese el ID de la tienda para consultar.', 'error');
+        return;
+      }
+      if (!projectId) {
+        showToast('Ingrese el ID del proyecto de Firebase.', 'error');
+        return;
+      }
+
+      lblName.innerText = 'Consultando...';
+      lblPhone.innerText = 'Consultando...';
+      lblPin.innerText = '...';
+      resultDiv.style.display = 'block';
+
+      try {
+        const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/stores/${storeId}`;
+        const response = await fetch(url);
+        
+        if (response.status === 404) {
+          resultDiv.style.display = 'none';
+          showToast(`La tienda "${storeId}" no existe en la nube.`, 'error');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        const fields = data.fields || {};
+        
+        const businessName = fields.businessName?.stringValue || 'Sin Nombre';
+        const whatsappNumber = fields.whatsappNumber?.stringValue || 'Sin WhatsApp';
+        const syncPin = fields.syncPin?.stringValue || 'Sin PIN';
+
+        lblName.innerText = businessName;
+        lblPhone.innerText = whatsappNumber;
+        lblPin.innerText = syncPin;
+        showToast('Datos de tienda cargados.', 'success');
+      } catch (e) {
+        resultDiv.style.display = 'none';
+        showToast('Error al consultar Firestore: ' + e.message, 'error');
+      }
+    }
+
+    async function cambiarPinFirestore() {
+      const storeId = document.getElementById('txt-firestore-store-id').value.trim().toLowerCase();
+      const projectId = document.getElementById('txt-firestore-project-id').value.trim();
+      const newPin = document.getElementById('txt-firestore-new-pin').value.trim();
+      const adminToken = document.getElementById('txt-firestore-admin-token').value.trim();
+      const btn = document.getElementById('btn-fs-update');
+
+      if (!storeId) {
+        showToast('Ingrese el ID de la tienda.', 'error');
+        return;
+      }
+      if (!projectId) {
+        showToast('Ingrese el ID del proyecto de Firebase.', 'error');
+        return;
+      }
+      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+        showToast('El PIN nuevo debe tener exactamente 4 dígitos numéricos.', 'error');
+        return;
+      }
+      if (!adminToken) {
+        showToast('Ingrese el Token Secreto Administrativo.', 'error');
+        return;
+      }
+
+      if (!confirm(`¿Está seguro de cambiar el PIN de sincronización de la tienda "${storeId}" en la nube?`)) {
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Cambiando PIN...';
+
+      try {
+        const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+        
+        // 1. Crear documento en pin_resets/{storeId} conteniendo el nuevo pin y token
+        const resetPayload = {
+          fields: {
+            newPin: { stringValue: newPin },
+            adminToken: { stringValue: adminToken }
+          }
+        };
+        
+        showToast('Enviando solicitud de reinicio...', 'info');
+        const resetRes = await fetch(`${baseUrl}/pin_resets/${storeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resetPayload)
+        });
+
+        if (!resetRes.ok) {
+          throw new Error('Token administrativo incorrecto u otra restricción de reglas.');
+        }
+
+        // 2. Obtener la tienda para poder hacer el PATCH de forma segura con los campos existentes (Firestore PATCH requiere todos los campos requeridos por las reglas)
+        showToast('Obteniendo perfil de tienda...', 'info');
+        const storeRes = await fetch(`${baseUrl}/stores/${storeId}`);
+        if (!storeRes.ok) {
+          throw new Error('No se pudo leer el perfil de la tienda para actualizar.');
+        }
+        const storeData = await storeRes.json();
+        const storeFields = storeData.fields || {};
+
+        // 3. Modificar el campo syncPin y enviar de vuelta a stores/{storeId}
+        storeFields.syncPin = { stringValue: newPin };
+        const storePayload = { fields: storeFields };
+
+        showToast('Actualizando PIN de la tienda...', 'info');
+        const updateRes = await fetch(`${baseUrl}/stores/${storeId}?updateMask.fieldPaths=syncPin`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(storePayload)
+        });
+
+        if (!updateRes.ok) {
+          throw new Error('Fallo al actualizar el PIN de la tienda en Firestore.');
+        }
+
+        // 4. Limpiar: Eliminar el documento temporal en pin_resets/{storeId}
+        showToast('Limpiando solicitud temporal...', 'info');
+        await fetch(`${baseUrl}/pin_resets/${storeId}`, {
+          method: 'DELETE'
+        });
+
+        showToast('¡PIN de sincronización actualizado con éxito!', 'success');
+        document.getElementById('txt-firestore-new-pin').value = '';
+        
+        // Refrescar consulta
+        await consultarPinFirestore();
+      } catch (e) {
+        showToast('Error al cambiar PIN: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '🔑 Actualizar PIN en la Nube';
       }
     }
 

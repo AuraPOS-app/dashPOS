@@ -1328,6 +1328,7 @@
                       <th>Cliente</th>
                       <th>Plan</th>
                       <th>Estado</th>
+                      <th>Web</th>
                       <th>Expira</th>
                       <th style="text-align:center;">Activaciones</th>
                       <th>Acciones</th>
@@ -1335,7 +1336,7 @@
                   </thead>
                   <tbody id="table-licenses-body">
                     <tr>
-                      <td colspan="7"
+                      <td colspan="8"
                         style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Conecta a
                         Firebase para ver las licencias.</td>
                     </tr>
@@ -1389,6 +1390,12 @@
                 <div class="form-group" style="margin-bottom:0;">
                   <label for="lic-notas">Notas internas</label>
                   <input type="text" id="lic-notas" class="input-field" placeholder="Opcional...">
+                </div>
+                <div class="form-group" style="margin-bottom:0; display:flex; align-items:center; gap:0.6rem; padding-top:1.4rem;">
+                  <input type="checkbox" id="lic-web" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
+                  <label for="lic-web" style="cursor:pointer; font-weight:600; color:var(--text); font-size:0.85rem; user-select:none;">
+                    🌐 Habilitar Catálogo Web / Tienda Online
+                  </label>
                 </div>
               </div>
 
@@ -2214,13 +2221,13 @@
         if (!dbUrl) return;
         const tbody = document.getElementById('table-licenses-body');
         const mobileList = document.getElementById('mobile-licenses-list');
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-soft); padding:2rem;"><span class="loader"></span><br><br>Cargando licencias...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-soft); padding:2rem;"><span class="loader"></span><br><br>Cargando licencias...</td></tr>`;
 
         try {
           const data = await fetchFirebase('licencias.json');
           licenciasCachedData = data || {};
           if (!data || Object.keys(data).length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">No hay licencias registradas.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:2rem;">No hay licencias registradas.</td></tr>`;
             mobileList.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:2rem;">No hay licencias registradas.</p>`;
             return;
           }
@@ -2228,10 +2235,10 @@
             renderLicencias(data);
           } catch (renderError) {
             console.error("Error al renderizar licencias:", renderError);
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:1.5rem; font-size:0.85rem;">Error de renderizado: ${renderError.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--danger); padding:1.5rem; font-size:0.85rem;">Error de renderizado: ${renderError.message}</td></tr>`;
           }
         } catch (e) {
-          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger); padding:1rem;">Error cargando licencias.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--danger); padding:1rem;">Error cargando licencias.</td></tr>`;
         }
       }
 
@@ -2259,6 +2266,9 @@
           }
 
           const planBadge = `<span class="badge badge-primary" style="text-transform:capitalize;">${escapeHTML(lic.plan || 'básico')}</span>`;
+          const webBadge = lic.permitir_sitio_web === true
+            ? `<span class="badge badge-success" style="cursor:pointer;" onclick="toggleSitioWeb('${escapeHTML(clave)}', true)" title="Clic para alternar permiso">🌐 Habilitado</span>`
+            : `<span class="badge" style="background:rgba(148,163,184,0.15);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;cursor:pointer;" onclick="toggleSitioWeb('${escapeHTML(clave)}', false)" title="Clic para alternar permiso">🔒 No incluido</span>`;
           const isSuspended = estado === 'suspendida';
 
           // Construir lista de equipos vinculados para escritorio
@@ -2456,6 +2466,7 @@
             </td>
             <td>${planBadge}</td>
             <td>${estadoBadge}</td>
+            <td>${webBadge}</td>
             <td style="font-size:0.82rem;color:var(--text-soft);">${expira}</td>
             <td style="text-align:center;font-size:0.82rem;">${act}</td>
             <td>
@@ -2463,11 +2474,17 @@
                 <button class="btn-icon" title="Copiar clave" onclick="copiarClave('${escapeHTML(clave)}')">
                   <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
+                <button class="btn-icon" title="${lic.permitir_sitio_web === true ? 'Desactivar Catálogo Web' : 'Activar Catálogo Web'}" onclick="toggleSitioWeb('${escapeHTML(clave)}', ${lic.permitir_sitio_web === true})">
+                  <svg viewBox="0 0 24 24" width="15" height="15" stroke="${lic.permitir_sitio_web === true ? 'var(--primary)' : 'var(--text-muted)'}" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </button>
                 <button class="btn-icon" title="Ver Detalles (Pagos, Auditoría, Equipos)" onclick="togglePagos('${escapeHTML(clave)}')">
                   <svg viewBox="0 0 24 24" width="15" height="15" stroke="#38bdf8" stroke-width="2" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 </button>
                 <button class="btn-icon" title="Registrar Pago" onclick="registrarPago('${escapeHTML(clave)}')">
                   <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--success)" stroke-width="2" fill="none"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </button>
+                <button class="btn-icon" title="Ajustar Días de Licencia" onclick="ajustarDias('${escapeHTML(clave)}')">
+                  <svg viewBox="0 0 24 24" width="15" height="15" stroke="#fb7185" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </button>
                 <button class="btn-icon" title="Cambiar Plan" onclick="cambiarPlan('${escapeHTML(clave)}', '${escapeHTML(lic.plan || 'basico')}')">
                   <svg viewBox="0 0 24 24" width="15" height="15" stroke="#a78bfa" stroke-width="2" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -2492,7 +2509,7 @@
             </td>
           </tr>
           <tr id="payments-${clave}" style="display:none; background:rgba(0,0,0,0.18);">
-            <td colspan="7" style="padding:1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td colspan="8" style="padding:1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06);">
               <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:1.5rem;">
                 <div>
                   <div style="font-weight:600; color:var(--success); font-size:0.85rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.3rem;">
@@ -2530,6 +2547,7 @@
             </div>
             <div class="t-card-details">
               <div class="t-card-detail-item"><span>Plan</span><span style="text-transform:capitalize;">${escapeHTML(lic.plan || '—')}</span></div>
+              <div class="t-card-detail-item"><span>Web</span><span>${webBadge}</span></div>
               <div class="t-card-detail-item"><span>Expira</span><span>${expira}</span></div>
               <div class="t-card-detail-item"><span>Activaciones</span><span>${act}</span></div>
               <div class="t-card-detail-item"><span>Email</span><span>${escapeHTML(lic.email || '—')}</span></div>
@@ -2538,13 +2556,17 @@
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px;" onclick="copiarClave('${escapeHTML(clave)}')">Copiar</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:#38bdf8; border-color:rgba(56,189,248,0.2);" onclick="toggleMobilePagos('${escapeHTML(clave)}')">Detalles</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:var(--success); border-color:rgba(16,185,129,0.2);" onclick="registrarPago('${escapeHTML(clave)}')">Pago</button>
+              <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:#fb7185; border-color:rgba(251,113,133,0.2);" onclick="ajustarDias('${escapeHTML(clave)}')">Días</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:#a78bfa; border-color:rgba(167,139,250,0.2);" onclick="cambiarPlan('${escapeHTML(clave)}', '${escapeHTML(lic.plan || 'basico')}')">Plan</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px;" onclick="restablecerActivaciones('${escapeHTML(clave)}')">Rest. Act.</button>
-              <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:var(--warning); border-color:rgba(245,158,11,0.2);" onclick="enviarAvisoVencimiento('${escapeHTML(clave)}', '${escapeHTML(lic.cliente || '')}')">Aviso</button>
-              <button class="btn btn-outline ${isSuspended ? 'btn-success' : ''}" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; grid-column: span 2; ${isSuspended ? '' : 'color:var(--danger); border-color:rgba(239,68,68,0.2);'}" onclick="toggleSuspender('${escapeHTML(clave)}', ${isSuspended})">
-                ${isSuspended ? 'Reactivar' : 'Suspender'}
+              <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:${lic.permitir_sitio_web === true ? 'var(--primary)' : 'var(--text-muted)'}; border-color:${lic.permitir_sitio_web === true ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.1)'};" onclick="toggleSitioWeb('${escapeHTML(clave)}', ${lic.permitir_sitio_web === true})">
+                ${lic.permitir_sitio_web === true ? '🌐 Desact. Web' : '🌐 Act. Web'}
               </button>
+              <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:var(--warning); border-color:rgba(245,158,11,0.2);" onclick="enviarAvisoVencimiento('${escapeHTML(clave)}', '${escapeHTML(lic.cliente || '')}')">Aviso</button>
               <button class="btn btn-danger" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px;" onclick="eliminarLicencia('${escapeHTML(clave)}', '${escapeHTML(lic.cliente || '')}')">Eliminar</button>
+              <button class="btn btn-outline ${isSuspended ? 'btn-success' : ''}" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; grid-column: span 3; ${isSuspended ? '' : 'color:var(--danger); border-color:rgba(239,68,68,0.2);'}" onclick="toggleSuspender('${escapeHTML(clave)}', ${isSuspended})">
+                ${isSuspended ? 'Reactivar Licencia' : 'Suspender Licencia'}
+              </button>
             </div>
             <div id="m-payments-${clave}" style="display:none; padding:0.75rem; background:rgba(0,0,0,0.15); border-radius:8px; margin-top:0.5rem; flex-direction:column; gap:0.75rem;">
               <div>
@@ -2729,6 +2751,78 @@
           showToast('Error al cambiar estado.', 'error');
         }
       }
+ 
+      async function ajustarDias(clave) {
+        const lic = (typeof licenciasCachedData !== 'undefined' ? licenciasCachedData[clave] : null) || {};
+        const venceActual = lic.vence_el || 'No definida';
+        
+        const entrada = prompt(
+          `Ajustar días de licencia para: ${lic.cliente || clave}\n` +
+          `Fecha de vencimiento actual: ${venceActual}\n\n` +
+          `Ingrese el número de días a sumar (ej: 30) o restar (ej: -15):`
+        );
+        
+        if (entrada === null || entrada.trim() === '') return;
+        const numDias = parseInt(entrada);
+        if (isNaN(numDias) || numDias === 0) {
+          alert('Por favor, ingrese un número entero válido (positivo o negativo).');
+          return;
+        }
+
+        let baseFecha = new Date();
+        if (lic.vence_el) {
+          const parts = lic.vence_el.split('-');
+          if (parts.length === 3) {
+            const tempFecha = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59);
+            if (!isNaN(tempFecha)) {
+              baseFecha = tempFecha;
+            }
+          }
+        }
+
+        const nuevaFecha = new Date(baseFecha.getTime() + numDias * 24 * 60 * 60 * 1000);
+        const graciaFecha = new Date(nuevaFecha.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+        const finPeriodoStr = formatLocalYMD(nuevaFecha);
+        const graciaStr = formatLocalYMD(graciaFecha);
+
+        const confirmChange = confirm(
+          `¿Confirmar ajuste de días?\n\n` +
+          `Días a aplicar: ${numDias > 0 ? '+' : ''}${numDias} días\n` +
+          `Vencimiento anterior: ${venceActual}\n` +
+          `Nuevo vencimiento: ${finPeriodoStr}\n` +
+          `Prórroga de gracia: ${graciaStr}`
+        );
+
+        if (!confirmChange) return;
+
+        const updates = {};
+        updates[`licencias/${clave}/vence_el`] = finPeriodoStr;
+        updates[`licencias/${clave}/gracia_hasta`] = graciaStr;
+        updates[`licencias/${clave}/fecha_expira`] = nuevaFecha.toISOString();
+        
+        const now = new Date();
+        if (nuevaFecha > now) {
+          updates[`licencias/${clave}/activa`] = true;
+          updates[`licencias/${clave}/suspendida`] = false;
+          updates[`licencias/${clave}/estado`] = 'activa';
+        }
+
+        try {
+          await fetchFirebase('.json', 'PATCH', updates);
+          
+          await registrarAuditoria(
+            clave, 
+            "Ajuste de Días", 
+            `Vencimiento ajustado por ${numDias > 0 ? '+' : ''}${numDias} días. Anterior: ${venceActual}. Nuevo: ${finPeriodoStr} (gracia: ${graciaStr}).`
+          );
+
+          showToast("Días de licencia ajustados con éxito.", "success");
+          cargarLicencias();
+        } catch (e) {
+          showToast(`Error al ajustar días: ${e.message}`, "error");
+        }
+      }
 
       async function eliminarLicencia(clave, cliente) {
         if (!confirm(`¿Eliminar permanentemente la licencia de "${cliente || clave}"? Esta acción no se puede deshacer.`)) return;
@@ -2763,6 +2857,21 @@
         }
       }
 
+      async function toggleSitioWeb(clave, actual) {
+        if (!dbUrl) { showToast('Conéctate a Firebase primero.', 'error'); return; }
+        const nuevoEstado = !actual;
+        const accion = nuevoEstado ? 'Habilitar Módulo Web' : 'Deshabilitar Módulo Web';
+        if (!confirm(`¿Deseas ${accion.toLowerCase()} para la clave ${clave}?`)) return;
+        try {
+          await fetchFirebase(`licencias/${clave}.json`, 'PATCH', { permitir_sitio_web: nuevoEstado });
+          await registrarAuditoria(clave, accion, `Módulo de catálogo web ${nuevoEstado ? 'habilitado' : 'deshabilitado'}.`);
+          showToast(`Módulo web ${nuevoEstado ? 'habilitado' : 'deshabilitado'} exitosamente.`, 'success');
+          cargarLicencias();
+        } catch (e) {
+          showToast('Error al actualizar permiso de catálogo web.', 'error');
+        }
+      }
+
       async function crearLicencia() {
         const cliente = document.getElementById('lic-cliente').value.trim();
         const email = document.getElementById('lic-email').value.trim();
@@ -2770,6 +2879,7 @@
         const dias = parseInt(document.getElementById('lic-dias').value) || 365;
         const maxAct = parseInt(document.getElementById('lic-activaciones').value) || 1;
         const notas = document.getElementById('lic-notas').value.trim();
+        const permitirWeb = document.getElementById('lic-web').checked;
         const btn = document.getElementById('btn-crear-licencia');
         const resultado = document.getElementById('lic-resultado');
 
@@ -2790,6 +2900,7 @@
           cliente,
           email,
           plan,
+          permitir_sitio_web: permitirWeb,
           estado: 'activa',
           trial_dias: 30,
           fecha_inicio: ahora.toISOString(),
@@ -2813,7 +2924,7 @@
         try {
           await fetchFirebase(`licencias/${clave}.json`, 'PUT', datos);
 
-          await registrarAuditoria(clave, "Creación de Licencia", `Licencia creada para ${cliente} (${email}) en plan ${plan.toUpperCase()} con ${dias} días de validez.`);
+          await registrarAuditoria(clave, "Creación de Licencia", `Licencia creada para ${cliente} (${email}) en plan ${plan.toUpperCase()} con ${dias} días de validez. Web: ${permitirWeb ? 'Habilitado' : 'No incluido'}.`);
 
           resultado.innerHTML = `
           <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:1rem;margin-top:1rem;">
@@ -2830,6 +2941,7 @@
           ['lic-cliente', 'lic-email', 'lic-notas'].forEach(id => document.getElementById(id).value = '');
           document.getElementById('lic-dias').value = '365';
           document.getElementById('lic-activaciones').value = '1';
+          document.getElementById('lic-web').checked = false;
         } catch (e) {
           showToast('Error al crear la licencia en Firebase.', 'error');
         } finally {

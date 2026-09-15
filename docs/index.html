@@ -1375,8 +1375,10 @@
                 <div class="form-group" style="margin-bottom:0;">
                   <label for="lic-plan">Plan</label>
                   <select id="lic-plan" class="input-field" onchange="onPlanChange(this.value)">
-                    <option value="basico">Plan Básico ($15/mes)</option>
-                    <option value="premium" selected>Plan Premium ($25/mes)</option>
+                    <option value="gratuito">🆓 Plan Gratuito (Permanente)</option>
+                    <option value="basico">🏷️ Plan Básico ($15/mes)</option>
+                    <option value="premium" selected>⭐ Plan Premium ($25/mes)</option>
+                    <option value="empresarial">🏢 Plan Empresarial ($200/año)</option>
                     <option value="trial">Período de Prueba (Trial)</option>
                     <option value="demo-7">Demo (7 días)</option>
                     <option value="demo-15">Demo (15 días)</option>
@@ -1384,7 +1386,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                   <label for="lic-dias">Días de validez</label>
-                  <input type="number" id="lic-dias" class="input-field" value="365" min="1" max="3650">
+                  <input type="number" id="lic-dias" class="input-field" value="30" min="1" max="9999">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                   <label for="lic-activaciones">Máx. activaciones</label>
@@ -2310,7 +2312,7 @@
         Object.entries(data).forEach(([clave, lic]) => {
           if (!lic) return;
           const estado = lic.estado || 'activa';
-          const expira = lic.fecha_expira ? lic.fecha_expira.substring(0, 10) : '—';
+          const expira = lic.fecha_expira ? lic.fecha_expira.substring(0, 10) : (lic.plan === 'gratuito' ? 'Permanente' : '—');
           const expirado = lic.fecha_expira && new Date(lic.fecha_expira) < ahora;
           const act = `${lic.activaciones || 0}/${lic.max_activaciones || 1}`;
 
@@ -2323,7 +2325,24 @@
             estadoBadge = `<span class="badge badge-success">🟢 Activa</span>`;
           }
 
-          const planBadge = `<span class="badge badge-primary" style="text-transform:capitalize;">${escapeHTML(lic.plan || 'básico')}</span>`;
+          let planBadge = '';
+          const p = (lic.plan || 'basico').toLowerCase();
+          if (p === 'gratuito') {
+            planBadge = `<span class="badge" style="background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.35);color:#64748b;">🆓 Gratuito</span>`;
+          } else if (p === 'basico') {
+            planBadge = `<span class="badge" style="background:rgba(148,163,184,0.15);border:1px solid rgba(148,163,184,0.35);color:#94a3b8;">🏷️ Básico</span>`;
+          } else if (p === 'premium') {
+            planBadge = `<span class="badge" style="background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.4);color:#6366f1;">⭐ Premium</span>`;
+          } else if (p === 'empresarial') {
+            planBadge = `<span class="badge" style="background:rgba(139,92,246,0.18);border:1px solid rgba(139,92,246,0.4);color:#8b5cf6;">🏢 Empresarial</span>`;
+          } else if (p.includes('demo') || p === 'trial') {
+            planBadge = `<span class="badge" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;">⚡ Demo</span>`;
+          } else {
+            planBadge = `<span class="badge badge-primary" style="text-transform:capitalize;">${escapeHTML(p)}</span>`;
+          }
+          if (estado === 'suspendida') {
+            planBadge += ` <span class="badge" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#ef4444;font-size:0.7rem;">⛔ Suspendida</span>`;
+          }
           const webBadge = lic.permitir_sitio_web === true
             ? `<span class="badge badge-success" style="cursor:pointer;" onclick="toggleSitioWeb('${escapeHTML(clave)}', true)" title="Clic para alternar permiso">🌐 Habilitado</span>`
             : `<span class="badge" style="background:rgba(148,163,184,0.15);border:1px solid rgba(148,163,184,0.3);color:#94a3b8;cursor:pointer;" onclick="toggleSitioWeb('${escapeHTML(clave)}', false)" title="Clic para alternar permiso">🔒 No incluido</span>`;
@@ -2604,7 +2623,7 @@
               ${estadoBadge}
             </div>
             <div class="t-card-details">
-              <div class="t-card-detail-item"><span>Plan</span><span style="text-transform:capitalize;">${escapeHTML(lic.plan || '—')}</span></div>
+              <div class="t-card-detail-item"><span>Plan</span><span>${planBadge}</span></div>
               <div class="t-card-detail-item"><span>Web</span><span>${webBadge}</span></div>
               <div class="t-card-detail-item"><span>Expira</span><span>${expira}</span></div>
               <div class="t-card-detail-item"><span>Activaciones</span><span>${act}</span></div>
@@ -2721,21 +2740,52 @@
 
       function onPlanChange(val) {
         const diasInput = document.getElementById('lic-dias');
-        if (val === 'demo-7') {
+        const webCheckbox = document.getElementById('lic-web');
+        if (!diasInput) return;
+        if (val === 'gratuito') {
+          diasInput.value = 9999;
+          diasInput.disabled = true;
+          diasInput.title = 'Plan Gratuito permanente';
+          if (webCheckbox) webCheckbox.checked = false;
+        } else if (val === 'demo-7') {
           diasInput.value = 7;
+          diasInput.disabled = true;
+          diasInput.title = 'Demo de 7 días fijo';
+          if (webCheckbox) webCheckbox.checked = true;
         } else if (val === 'demo-15') {
           diasInput.value = 15;
+          diasInput.disabled = true;
+          diasInput.title = 'Demo de 15 días fijo';
+          if (webCheckbox) webCheckbox.checked = true;
         } else if (val === 'trial') {
+          diasInput.value = 15;
+          diasInput.disabled = false;
+          diasInput.title = '';
+          if (webCheckbox) webCheckbox.checked = true;
+        } else if (val === 'basico') {
           diasInput.value = 30;
-        } else if (val === 'basico' || val === 'premium') {
+          diasInput.disabled = false;
+          diasInput.title = '';
+          if (webCheckbox) webCheckbox.checked = false;
+        } else if (val === 'premium') {
+          diasInput.value = 30;
+          diasInput.disabled = false;
+          diasInput.title = '';
+        } else if (val === 'empresarial') {
           diasInput.value = 365;
+          diasInput.disabled = false;
+          diasInput.title = '';
+          if (webCheckbox) webCheckbox.checked = true;
+        } else {
+          diasInput.disabled = false;
+          diasInput.title = '';
         }
       }
 
       async function enviarAvisoVencimiento(clave, cliente) {
         if (!confirm(`¿Enviar aviso de vencimiento para la licencia de "${cliente}"?`)) return;
 
-        const mensaje = `Tu licencia de AuraPOS (${cliente}) vence pronto. Por favor ponte en contacto con soporte técnico para renovar tu suscripción y evitar cortes de servicio.`;
+        const mensaje = `Tu licencia del sistema (${cliente}) vence pronto. Por favor ponte en contacto con soporte técnico para renovar tu suscripción y evitar cortes de servicio.`;
 
         const payload = {
           id: "notice_" + Date.now(),
@@ -2770,16 +2820,44 @@
       }
 
       async function cambiarPlan(clave, planActual) {
-        const nuevoPlan = planActual === 'premium' ? 'basico' : 'premium';
-        const confirmChange = window.confirm(
-          `¿Cambiar el plan de esta licencia de ${planActual.toUpperCase()} a ${nuevoPlan.toUpperCase()}?`
+        const planes = ['gratuito', 'basico', 'premium', 'empresarial'];
+        const input = prompt(
+          `Cambiar plan para la clave: ${clave}\n` +
+          `Plan actual: ${(planActual || 'basico').toUpperCase()}\n\n` +
+          `Escriba el nuevo plan (gratuito, basico, premium, empresarial):`,
+          planActual || 'basico'
         );
-        if (!confirmChange) return;
+        if (!input) return;
+        const nuevoPlan = input.trim().toLowerCase();
+        if (!planes.includes(nuevoPlan)) {
+          alert('Plan inválido. Opciones válidas: gratuito, basico, premium, empresarial');
+          return;
+        }
+        if (nuevoPlan === (planActual || '').toLowerCase()) return;
 
         try {
-          await fetchFirebase(`licencias/${clave}.json`, 'PATCH', { plan: nuevoPlan });
+          const patchData = { plan: nuevoPlan };
+          if (nuevoPlan === 'gratuito') {
+            patchData.fecha_expira = null;
+            patchData.vence_el = 'Permanente';
+            patchData.gracia_hasta = 'Permanente';
+          } else {
+            const lic = (typeof licenciasCachedData !== 'undefined' ? licenciasCachedData[clave] : null) || {};
+            if (!lic.fecha_expira || lic.plan === 'gratuito' || lic.vence_el === 'Permanente') {
+              const ahora = new Date();
+              const dias = nuevoPlan === 'empresarial' ? 365 : 30;
+              const expira = new Date(ahora.getTime() + dias * 86400000);
+              patchData.fecha_expira = expira.toISOString();
+              patchData.vence_el = formatLocalYMD(expira);
+              patchData.gracia_hasta = formatLocalYMD(new Date(expira.getTime() + 3 * 86400000));
+            }
+            if (nuevoPlan === 'empresarial') {
+              patchData.permitir_sitio_web = true;
+            }
+          }
+          await fetchFirebase(`licencias/${clave}.json`, 'PATCH', patchData);
 
-          await registrarAuditoria(clave, "Cambio de Plan", `Plan cambiado de ${planActual.toUpperCase()} a ${nuevoPlan.toUpperCase()}.`);
+          await registrarAuditoria(clave, "Cambio de Plan", `Plan cambiado de ${(planActual || 'desconocido').toUpperCase()} a ${nuevoPlan.toUpperCase()}.`);
 
           showToast(`Plan cambiado a ${nuevoPlan.toUpperCase()}`, "success");
           cargarLicencias();
@@ -2934,10 +3012,10 @@
         const cliente = document.getElementById('lic-cliente').value.trim();
         const email = document.getElementById('lic-email').value.trim();
         const plan = document.getElementById('lic-plan').value;
-        const dias = parseInt(document.getElementById('lic-dias').value) || 365;
+        const dias = parseInt(document.getElementById('lic-dias').value) || (plan === 'empresarial' ? 365 : (plan === 'gratuito' ? 9999 : 30));
         const maxAct = parseInt(document.getElementById('lic-activaciones').value) || 1;
         const notas = document.getElementById('lic-notas').value.trim();
-        const permitirWeb = document.getElementById('lic-web').checked;
+        const permitirWeb = (plan === 'empresarial') ? true : document.getElementById('lic-web').checked;
         const btn = document.getElementById('btn-crear-licencia');
         const resultado = document.getElementById('lic-resultado');
 
@@ -2951,8 +3029,9 @@
         const clave = generarClave();
         const ahora = new Date();
         const expira = new Date(ahora.getTime() + dias * 86400000);
-        const vence_el = formatLocalYMD(expira);
-        const gracia_hasta = formatLocalYMD(new Date(expira.getTime() + 3 * 86400000));
+        const vence_el = plan === 'gratuito' ? 'Permanente' : formatLocalYMD(expira);
+        const gracia_hasta = plan === 'gratuito' ? 'Permanente' : formatLocalYMD(new Date(expira.getTime() + 3 * 86400000));
+        const fecha_expira_val = plan === 'gratuito' ? null : expira.toISOString();
 
         const datos = {
           cliente,
@@ -2960,9 +3039,9 @@
           plan,
           permitir_sitio_web: permitirWeb,
           estado: 'activa',
-          trial_dias: 30,
+          trial_dias: plan === 'trial' ? 15 : 30,
           fecha_inicio: ahora.toISOString(),
-          fecha_expira: expira.toISOString(),
+          fecha_expira: fecha_expira_val,
           activaciones: 0,
           max_activaciones: maxAct,
           hardware_id: '',
@@ -2997,7 +3076,8 @@
           cargarLicencias();
           // Limpiar formulario
           ['lic-cliente', 'lic-email', 'lic-notas'].forEach(id => document.getElementById(id).value = '');
-          document.getElementById('lic-dias').value = '365';
+          document.getElementById('lic-plan').value = 'premium';
+          onPlanChange('premium');
           document.getElementById('lic-activaciones').value = '1';
           document.getElementById('lic-web').checked = false;
         } catch (e) {

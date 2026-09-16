@@ -1537,6 +1537,24 @@
 
       function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        // Anti-duplicados: si ya existe una alerta idéntica visible, refrescar temporizador
+        const existingToasts = container.querySelectorAll('.toast');
+        for (const el of existingToasts) {
+          const span = el.querySelector('span');
+          if (span && span.textContent.trim() === message.trim()) {
+            el.style.transform = 'scale(1.04)';
+            setTimeout(() => { el.style.transform = 'none'; }, 150);
+            if (el._timer) clearTimeout(el._timer);
+            el._timer = setTimeout(() => {
+              el.classList.remove('show');
+              setTimeout(() => el.remove(), 300);
+            }, 3500);
+            return;
+          }
+        }
+
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
 
@@ -1553,7 +1571,7 @@
         setTimeout(() => toast.classList.add('show'), 10);
 
         // Remover tras 3.5 segundos
-        setTimeout(() => {
+        toast._timer = setTimeout(() => {
           toast.classList.remove('show');
           setTimeout(() => toast.remove(), 300);
         }, 3500);
@@ -3251,7 +3269,6 @@
           }
 
           // 4. Limpiar: Eliminar el documento temporal en pin_resets/{storeId}
-          showToast('Limpiando solicitud temporal...', 'info');
           await fetch(`${baseUrl}/pin_resets/${storeId}`, {
             method: 'DELETE'
           });

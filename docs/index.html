@@ -874,10 +874,174 @@
         justify-content: center;
       }
     }
+    /* ── Estilos de Licenciamiento Modular ── */
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      color: var(--text-soft);
+      padding: 0.35rem 0.65rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .preset-btn:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #fff;
+    }
+
+    .mod-tile {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      transition: var(--transition);
+    }
+
+    .mod-tile:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .mod-tile input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .mod-tile:has(input:checked) {
+      background: rgba(99, 102, 241, 0.08);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .mod-tile-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      min-width: 0;
+    }
+
+    .mod-tile-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .mod-tile-desc {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      line-height: 1.15;
+    }
+
+    .mod-card-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .mod-card-toggle:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mod-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      max-width: 78%;
+    }
+
+    .mod-card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .mod-card-desc {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      line-height: 1.25;
+    }
+
+    .mod-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #c7d2fe;
+      margin: 0.1rem 0.15rem 0.1rem 0;
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- MODAL DE ADMINISTRACIÓN DE MÓDULOS DE LICENCIA -->
+  <div id="modal-modulos" class="overlay">
+    <div class="card" style="max-width: 620px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 1.5rem;">
+      <div class="card-header" style="margin-bottom: 1rem; padding-bottom: 0.75rem;">
+        <div>
+          <h3 class="card-title" style="font-size: 1.1rem; color: #fff;">
+            🧩 Módulos y Capacidades de la Licencia
+          </h3>
+          <p id="modal-modulos-subtitulo" style="font-size: 0.78rem; color: var(--text-soft); margin-top: 0.2rem;">
+            Cargando detalles...
+          </p>
+        </div>
+        <button class="btn-icon" onclick="cerrarModalModulos()" title="Cerrar modal" style="font-size: 1.1rem; width: 28px; height: 28px;">✕</button>
+      </div>
+
+      <!-- Presets dentro del modal -->
+      <div style="margin-bottom: 1rem;">
+        <label style="display:block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; font-weight: 600;">
+          Aplicar Preset de Giro Comercial:
+        </label>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;" id="modal-preset-buttons">
+          <!-- Botones de presets inyectados dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Lista de interruptores de módulos -->
+      <div id="modal-modulos-lista" style="display: flex; flex-direction: column; gap: 0.55rem; overflow-y: auto; max-height: 48vh; padding-right: 0.3rem;">
+        <!-- Switches renderizados dinámicamente -->
+      </div>
+
+      <!-- Botones de acción del modal -->
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05);">
+        <button class="btn btn-outline" onclick="cerrarModalModulos()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-guardar-modulos" onclick="guardarModulosLicencia()">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- PANTALLA DE ACCESO REMOTO (LOGIN / CONFIGURACIÓN) -->
   <div id="login-overlay" class="overlay active">
@@ -1396,11 +1560,82 @@
                   <label for="lic-notas">Notas internas</label>
                   <input type="text" id="lic-notas" class="input-field" placeholder="Opcional...">
                 </div>
-                <div class="form-group" style="margin-bottom:0; display:flex; align-items:center; gap:0.6rem; padding-top:1.4rem;">
-                  <input type="checkbox" id="lic-web" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
-                  <label for="lic-web" style="cursor:pointer; font-weight:600; color:var(--text); font-size:0.85rem; user-select:none;">
-                    🌐 Habilitar Catálogo Web / Tienda Online
-                  </label>
+                <!-- Módulos y Presets Granulares -->
+                <div style="grid-column: 1 / -1; margin-top: 0.6rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <label style="font-weight: 600; color: #fff; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                      🧩 Módulos y Funcionalidades Autorizadas:
+                    </label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
+                      <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">PRESETS:</span>
+                      <button type="button" class="preset-btn" onclick="aplicarPresetCreacion('general')">🏷️ General</button>
+                      <button type="button" class="preset-btn" onclick="aplicarPresetCreacion('minimarket')">🛒 Minimarket</button>
+                      <button type="button" class="preset-btn" onclick="aplicarPresetCreacion('farmacia')">💊 Farmacia</button>
+                      <button type="button" class="preset-btn" onclick="aplicarPresetCreacion('boutique')">👕 Boutique</button>
+                      <button type="button" class="preset-btn" onclick="aplicarPresetCreacion('gastronomia')">🍳 Café / Rest.</button>
+                      <button type="button" class="preset-btn" onclick="aplicarPresetCreacion('full')">⚡ Full Suite</button>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.5rem; background: rgba(0,0,0,0.18); padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-farmacia">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">💊 Farmacia y Lotes</span>
+                        <span class="mod-tile-desc">FEFO, vencimientos, receta médica</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-variantes">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">👕 Tallas y Colores</span>
+                        <span class="mod-tile-desc">Matriz de indumentaria y variantes</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-recetas">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">🍳 Gastronomía / Recetas</span>
+                        <span class="mod-tile-desc">Escandallos y deducción de insumos</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-balanza">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">⚖️ Balanza Comercial</span>
+                        <span class="mod-tile-desc">Pesaje en vivo y venta decimal</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-catalogo-web" onchange="const w=document.getElementById('lic-web'); if(w) w.checked=this.checked;">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">🌐 Catálogo Web / Tienda</span>
+                        <span class="mod-tile-desc">Pedidos online y nube Firestore</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-multicaja">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">🖥️ Red Multi-Caja</span>
+                        <span class="mod-tile-desc">Terminales maestras y secundarias</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-fidelizacion">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">⭐ Puntos de Clientes</span>
+                        <span class="mod-tile-desc">Acumulación y canje de fidelidad</span>
+                      </div>
+                    </label>
+                    <label class="mod-tile">
+                      <input type="checkbox" id="lic-mod-creditos">
+                      <div class="mod-tile-content">
+                        <span class="mod-tile-title">📖 Libro de Créditos</span>
+                        <span class="mod-tile-desc">Venta al fiar, cuentas por cobrar</span>
+                      </div>
+                    </label>
+                  </div>
+                  <input type="checkbox" id="lic-web" style="display:none;">
                 </div>
               </div>
 
@@ -1517,7 +1752,7 @@
           limpiarTerminalesInactivas();
 
           if (timerRef) clearInterval(timerRef);
-          timerRef = setInterval(cargarDatos, 10000);
+          timerRef = setInterval(cargarDatos, 30000);
         } else {
           // Fallback local: Cargar credenciales del localStorage si no es por proxy
           const savedUrl = localStorage.getItem('remote_fb_url');
@@ -1634,7 +1869,7 @@
           limpiarTerminalesInactivas();
 
           if (timerRef) clearInterval(timerRef);
-          timerRef = setInterval(cargarDatos, 10000);
+          timerRef = setInterval(cargarDatos, 30000);
 
         } catch (e) {
           console.error(e);
@@ -2285,8 +2520,82 @@
       }
 
       // ════════════════════════════════════════════════════════════════
-      // GESTIÓN DE LICENCIAS
+      // GESTIÓN DE LICENCIAS Y MÓDULOS MODULARES
       // ════════════════════════════════════════════════════════════════
+
+      const MODULOS_CONFIG = [
+        { id: 'farmacia', nombre: 'Farmacia', icono: '💊', desc: 'Control de lotes, FEFO, receta médica y principio activo' },
+        { id: 'variantes', nombre: 'Tallas y Colores', icono: '👕', desc: 'Matriz de indumentaria y códigos de barra por variante' },
+        { id: 'recetas', nombre: 'Gastronomía', icono: '🍳', desc: 'Recetas, escandallos y deducción de materias primas' },
+        { id: 'balanza', nombre: 'Balanza', icono: '⚖️', desc: 'Báscula comercial, pesaje en vivo y venta decimal' },
+        { id: 'catalogo_web', nombre: 'Catálogo Web', icono: '🌐', desc: 'Tienda digital en la nube y pedidos online' },
+        { id: 'multicaja', nombre: 'Multi-Caja', icono: '🖥️', desc: 'Red local servidor y terminales secundarias' },
+        { id: 'fidelizacion', nombre: 'Puntos', icono: '⭐', desc: 'Acumulación y canje de puntos de clientes' },
+        { id: 'creditos', nombre: 'Créditos', icono: '📖', desc: 'Libro de fiar, cuentas por cobrar y abonos' },
+      ];
+
+      const PRESETS_GIRO = {
+        general: {
+          nombre: 'Abarrotes / General',
+          modulos: { farmacia: false, variantes: false, recetas: false, balanza: false, catalogo_web: false, multicaja: false, fidelizacion: true, creditos: true }
+        },
+        minimarket: {
+          nombre: 'Minimarket / Súper',
+          modulos: { farmacia: true, variantes: false, recetas: false, balanza: true, catalogo_web: false, multicaja: true, fidelizacion: true, creditos: true }
+        },
+        farmacia: {
+          nombre: 'Farmacia',
+          modulos: { farmacia: true, variantes: false, recetas: false, balanza: false, catalogo_web: false, multicaja: false, fidelizacion: true, creditos: true }
+        },
+        boutique: {
+          nombre: 'Boutique / Ropa',
+          modulos: { farmacia: false, variantes: true, recetas: false, balanza: false, catalogo_web: true, multicaja: false, fidelizacion: true, creditos: true }
+        },
+        gastronomia: {
+          nombre: 'Café / Restaurante',
+          modulos: { farmacia: false, variantes: false, recetas: true, balanza: false, catalogo_web: true, multicaja: true, fidelizacion: true, creditos: false }
+        },
+        full: {
+          nombre: 'Full Suite',
+          modulos: { farmacia: true, variantes: true, recetas: true, balanza: true, catalogo_web: true, multicaja: true, fidelizacion: true, creditos: true }
+        }
+      };
+
+      function getLicenciaModulos(lic) {
+        const m = lic.modulos || {};
+        const p = (lic.plan || 'basico').toLowerCase();
+        return {
+          farmacia: m.farmacia === true,
+          variantes: m.variantes === true,
+          recetas: m.recetas === true,
+          balanza: m.balanza === true,
+          catalogo_web: (m.catalogo_web === true || lic.permitir_sitio_web === true),
+          multicaja: (m.multicaja === true || p === 'empresarial'),
+          fidelizacion: (m.fidelizacion === true || p === 'premium' || p === 'empresarial'),
+          creditos: (m.creditos === true || p === 'premium' || p === 'empresarial'),
+        };
+      }
+
+      function renderModulosChips(modulos) {
+        let chips = '';
+        MODULOS_CONFIG.forEach(item => {
+          if (modulos[item.id]) {
+            chips += `<span class="mod-chip" title="${escapeHTML(item.desc)}">${item.icono} ${escapeHTML(item.nombre)}</span>`;
+          }
+        });
+        return chips || `<span style="font-size:0.7rem; color:var(--text-muted);">Sin módulos adicionales</span>`;
+      }
+
+      function aplicarPresetCreacion(presetKey) {
+        const preset = PRESETS_GIRO[presetKey];
+        if (!preset) return;
+        MODULOS_CONFIG.forEach(item => {
+          const chk = document.getElementById(`lic-mod-${item.id}`);
+          if (chk) chk.checked = !!preset.modulos[item.id];
+        });
+        const webChk = document.getElementById('lic-web');
+        if (webChk) webChk.checked = !!preset.modulos.catalogo_web;
+      }
 
       function generarClave() {
         const anio = new Date().getFullYear();
@@ -2552,12 +2861,18 @@
             mobileAuditoriaHTML = `<div style="color:var(--text-muted); font-size:0.75rem;">No hay eventos de auditoría registrados.</div>`;
           }
 
+          const modulos = getLicenciaModulos(lic);
+          const modulosChipsHTML = renderModulosChips(modulos);
+
           desktopHTML += `
           <tr>
             <td><code style="font-size:0.78rem;color:var(--text-soft);user-select:all;cursor:pointer;" onclick="copiarClave('${escapeHTML(clave)}')" title="Clic para copiar">${escapeHTML(clave)}</code></td>
             <td>
               <div style="font-weight:600;color:#fff;">${escapeHTML(lic.cliente || '—')}</div>
               <div style="font-size:0.75rem;color:var(--text-muted);">${escapeHTML(lic.email || '')}</div>
+              <div style="margin-top:0.35rem; display:flex; flex-wrap:wrap; gap:0.2rem; align-items:center;">
+                ${modulosChipsHTML}
+              </div>
             </td>
             <td>${planBadge}</td>
             <td>${estadoBadge}</td>
@@ -2566,6 +2881,9 @@
             <td style="text-align:center;font-size:0.82rem;">${act}</td>
             <td>
               <div class="row-actions">
+                <button class="btn-icon" title="Gestionar Módulos" onclick="abrirModalModulos('${escapeHTML(clave)}')">
+                  <svg viewBox="0 0 24 24" width="15" height="15" stroke="#34d399" stroke-width="2" fill="none"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                </button>
                 <button class="btn-icon" title="Copiar clave" onclick="copiarClave('${escapeHTML(clave)}')">
                   <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
@@ -2605,7 +2923,7 @@
           </tr>
           <tr id="payments-${clave}" style="display:none; background:rgba(0,0,0,0.18);">
             <td colspan="8" style="padding:1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-              <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:1.5rem;">
+              <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap:1.25rem;">
                 <div>
                   <div style="font-weight:600; color:var(--success); font-size:0.85rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.3rem;">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -2619,6 +2937,18 @@
                     Auditoría de Licencia
                   </div>
                   ${auditoriaHTML}
+                </div>
+                <div>
+                  <div style="font-weight:600; color:#34d399; font-size:0.85rem; margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
+                    <span style="display:flex; align-items:center; gap:0.3rem;">
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      Módulos
+                    </span>
+                    <button class="btn-logout" style="padding:0.15rem 0.4rem; font-size:0.68rem; border-radius:4px; margin:0;" onclick="abrirModalModulos('${escapeHTML(clave)}')">Editar</button>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.25rem;">
+                    ${modulosChipsHTML}
+                  </div>
                 </div>
                 <div>
                   <div style="font-weight:600; color:var(--warning); font-size:0.85rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.3rem;">
@@ -2646,8 +2976,13 @@
               <div class="t-card-detail-item"><span>Expira</span><span>${expira}</span></div>
               <div class="t-card-detail-item"><span>Activaciones</span><span>${act}</span></div>
               <div class="t-card-detail-item"><span>Email</span><span>${escapeHTML(lic.email || '—')}</span></div>
+              <div class="t-card-detail-item" style="grid-column: span 2; margin-top: 0.2rem;">
+                <span>Módulos Activos</span>
+                <div style="display:flex; flex-wrap:wrap; gap:0.2rem; margin-top:0.25rem;">${modulosChipsHTML}</div>
+              </div>
             </div>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.75rem;">
+              <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:#34d399; border-color:rgba(52,211,153,0.3);" onclick="abrirModalModulos('${escapeHTML(clave)}')">🧩 Módulos</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px;" onclick="copiarClave('${escapeHTML(clave)}')">Copiar</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:#38bdf8; border-color:rgba(56,189,248,0.2);" onclick="toggleMobilePagos('${escapeHTML(clave)}')">Detalles</button>
               <button class="btn btn-outline" style="font-size:0.75rem; padding:0.4rem; width:100%; border-radius:6px; color:var(--success); border-color:rgba(16,185,129,0.2);" onclick="registrarPago('${escapeHTML(clave)}')">Pago</button>
@@ -2764,35 +3099,40 @@
           diasInput.value = 9999;
           diasInput.disabled = true;
           diasInput.title = 'Plan Gratuito permanente';
+          aplicarPresetCreacion('general');
+          const c = document.getElementById('lic-mod-creditos');
+          if (c) c.checked = false;
           if (webCheckbox) webCheckbox.checked = false;
         } else if (val === 'demo-7') {
           diasInput.value = 7;
           diasInput.disabled = true;
           diasInput.title = 'Demo de 7 días fijo';
-          if (webCheckbox) webCheckbox.checked = true;
+          aplicarPresetCreacion('full');
         } else if (val === 'demo-15') {
           diasInput.value = 15;
           diasInput.disabled = true;
           diasInput.title = 'Demo de 15 días fijo';
-          if (webCheckbox) webCheckbox.checked = true;
+          aplicarPresetCreacion('full');
         } else if (val === 'trial') {
           diasInput.value = 15;
           diasInput.disabled = false;
           diasInput.title = '';
-          if (webCheckbox) webCheckbox.checked = true;
+          aplicarPresetCreacion('full');
         } else if (val === 'basico') {
           diasInput.value = 30;
           diasInput.disabled = false;
           diasInput.title = '';
-          if (webCheckbox) webCheckbox.checked = false;
+          aplicarPresetCreacion('general');
         } else if (val === 'premium') {
           diasInput.value = 30;
           diasInput.disabled = false;
           diasInput.title = '';
+          aplicarPresetCreacion('general');
         } else if (val === 'empresarial') {
           diasInput.value = 365;
           diasInput.disabled = false;
           diasInput.title = '';
+          aplicarPresetCreacion('full');
           if (webCheckbox) webCheckbox.checked = true;
         } else {
           diasInput.disabled = false;
@@ -2871,6 +3211,8 @@
             }
             if (nuevoPlan === 'empresarial') {
               patchData.permitir_sitio_web = true;
+              patchData['modulos/catalogo_web'] = true;
+              patchData['modulos/multicaja'] = true;
             }
           }
           await fetchFirebase(`licencias/${clave}.json`, 'PATCH', patchData);
@@ -3017,12 +3359,112 @@
         const accion = nuevoEstado ? 'Habilitar Módulo Web' : 'Deshabilitar Módulo Web';
         if (!confirm(`¿Deseas ${accion.toLowerCase()} para la clave ${clave}?`)) return;
         try {
-          await fetchFirebase(`licencias/${clave}.json`, 'PATCH', { permitir_sitio_web: nuevoEstado });
+          await fetchFirebase(`licencias/${clave}.json`, 'PATCH', {
+            permitir_sitio_web: nuevoEstado,
+            'modulos/catalogo_web': nuevoEstado
+          });
           await registrarAuditoria(clave, accion, `Módulo de catálogo web ${nuevoEstado ? 'habilitado' : 'deshabilitado'}.`);
           showToast(`Módulo web ${nuevoEstado ? 'habilitado' : 'deshabilitado'} exitosamente.`, 'success');
           cargarLicencias();
         } catch (e) {
           showToast('Error al actualizar permiso de catálogo web.', 'error');
+        }
+      }
+
+      // ── Controladores del Modal de Módulos ──
+      let claveModulosActiva = null;
+
+      function abrirModalModulos(clave) {
+        claveModulosActiva = clave;
+        const lic = (typeof licenciasCachedData !== 'undefined' ? licenciasCachedData[clave] : null) || {};
+        const modal = document.getElementById('modal-modulos');
+        const subtitulo = document.getElementById('modal-modulos-subtitulo');
+        const lista = document.getElementById('modal-modulos-lista');
+        const presetContainer = document.getElementById('modal-preset-buttons');
+        if (!modal) return;
+
+        subtitulo.innerHTML = `Cliente: <strong>${escapeHTML(lic.cliente || 'Desconocido')}</strong> | Clave: <code>${escapeHTML(clave)}</code>`;
+
+        if (presetContainer) {
+          let presetsHTML = '';
+          Object.entries(PRESETS_GIRO).forEach(([k, p]) => {
+            presetsHTML += `<button type="button" class="preset-btn" onclick="aplicarPresetModal('${k}')">${escapeHTML(p.nombre)}</button>`;
+          });
+          presetContainer.innerHTML = presetsHTML;
+        }
+
+        const modulos = getLicenciaModulos(lic);
+        let itemsHTML = '';
+        MODULOS_CONFIG.forEach(item => {
+          const checked = modulos[item.id] === true ? 'checked' : '';
+          itemsHTML += `
+            <div class="mod-card-toggle">
+              <div class="mod-card-info">
+                <div class="mod-card-title">
+                  <span>${item.icono}</span>
+                  <span>${escapeHTML(item.nombre)}</span>
+                </div>
+                <div class="mod-card-desc">${escapeHTML(item.desc)}</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="modal-mod-${item.id}" ${checked}>
+                <span class="slider"></span>
+              </label>
+            </div>
+          `;
+        });
+        lista.innerHTML = itemsHTML;
+        modal.classList.add('active');
+      }
+
+      function cerrarModalModulos() {
+        const modal = document.getElementById('modal-modulos');
+        if (modal) modal.classList.remove('active');
+        claveModulosActiva = null;
+      }
+
+      function aplicarPresetModal(presetKey) {
+        const preset = PRESETS_GIRO[presetKey];
+        if (!preset) return;
+        MODULOS_CONFIG.forEach(item => {
+          const chk = document.getElementById(`modal-mod-${item.id}`);
+          if (chk) chk.checked = !!preset.modulos[item.id];
+        });
+      }
+
+      async function guardarModulosLicencia() {
+        if (!claveModulosActiva) return;
+        if (!dbUrl) { showToast('Conéctate a Firebase primero.', 'error'); return; }
+
+        const clave = claveModulosActiva;
+        const btn = document.getElementById('btn-guardar-modulos');
+        if (btn) { btn.disabled = true; btn.innerText = 'Guardando...'; }
+
+        const modulosObj = {};
+        MODULOS_CONFIG.forEach(item => {
+          const chk = document.getElementById(`modal-mod-${item.id}`);
+          modulosObj[item.id] = chk ? chk.checked : false;
+        });
+
+        const patchData = {
+          modulos: modulosObj,
+          permitir_sitio_web: modulosObj.catalogo_web
+        };
+
+        try {
+          await fetchFirebase(`licencias/${clave}.json`, 'PATCH', patchData);
+
+          const activos = MODULOS_CONFIG.filter(m => modulosObj[m.id]).map(m => m.nombre);
+          const activosStr = activos.length > 0 ? activos.join(', ') : 'Ninguno';
+          await registrarAuditoria(clave, "Módulos Actualizados", `Módulos asignados por el administrador: [${activosStr}].`);
+
+          showToast(`Módulos de ${clave} actualizados con éxito.`, 'success');
+          cerrarModalModulos();
+          cargarLicencias();
+        } catch (e) {
+          showToast(`Error al actualizar módulos: ${e.message}`, 'error');
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerText = 'Guardar Cambios'; }
         }
       }
 
@@ -3033,12 +3475,21 @@
         const dias = parseInt(document.getElementById('lic-dias').value) || (plan === 'empresarial' ? 365 : (plan === 'gratuito' ? 9999 : 30));
         const maxAct = parseInt(document.getElementById('lic-activaciones').value) || 1;
         const notas = document.getElementById('lic-notas').value.trim();
-        const permitirWeb = (plan === 'empresarial') ? true : document.getElementById('lic-web').checked;
         const btn = document.getElementById('btn-crear-licencia');
         const resultado = document.getElementById('lic-resultado');
 
         if (!cliente) { showToast('El nombre del cliente es obligatorio.', 'error'); return; }
         if (!dbUrl) { showToast('Conéctate a Firebase primero.', 'error'); return; }
+
+        const modulos = {};
+        MODULOS_CONFIG.forEach(item => {
+          const chk = document.getElementById(`lic-mod-${item.id}`);
+          modulos[item.id] = chk ? chk.checked : false;
+        });
+        if (plan === 'empresarial') {
+          modulos.catalogo_web = true;
+        }
+        const permitirWeb = modulos.catalogo_web;
 
         btn.disabled = true;
         btn.innerText = 'Generando...';
@@ -3055,6 +3506,7 @@
           cliente,
           email,
           plan,
+          modulos,
           permitir_sitio_web: permitirWeb,
           estado: 'activa',
           trial_dias: plan === 'trial' ? 15 : 30,
@@ -3079,7 +3531,8 @@
         try {
           await fetchFirebase(`licencias/${clave}.json`, 'PUT', datos);
 
-          await registrarAuditoria(clave, "Creación de Licencia", `Licencia creada para ${cliente} (${email}) en plan ${plan.toUpperCase()} con ${dias} días de validez. Web: ${permitirWeb ? 'Habilitado' : 'No incluido'}.`);
+          const modActivos = MODULOS_CONFIG.filter(m => modulos[m.id]).map(m => m.nombre).join(', ') || 'Ninguno';
+          await registrarAuditoria(clave, "Creación de Licencia", `Licencia creada para ${cliente} (${email}) en plan ${plan.toUpperCase()} con ${dias} días de validez. Módulos: [${modActivos}]. Web: ${permitirWeb ? 'Habilitado' : 'No incluido'}.`);
 
           resultado.innerHTML = `
           <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:1rem;margin-top:1rem;">
@@ -3097,7 +3550,6 @@
           document.getElementById('lic-plan').value = 'premium';
           onPlanChange('premium');
           document.getElementById('lic-activaciones').value = '1';
-          document.getElementById('lic-web').checked = false;
         } catch (e) {
           showToast('Error al crear la licencia en Firebase.', 'error');
         } finally {
